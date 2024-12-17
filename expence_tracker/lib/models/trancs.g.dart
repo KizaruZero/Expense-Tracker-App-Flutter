@@ -21,6 +21,8 @@ class TransactionAdapter extends TypeAdapter<Transaction> {
       amount: fields[1] as double,
       isIncome: fields[2] as bool,
       date: fields[3] as DateTime,
+      title: fields[4] as String,
+      description: fields[5] as String,
     );
   }
 

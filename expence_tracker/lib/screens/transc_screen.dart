@@ -1,89 +1,163 @@
-import 'package:expence_tracker/models/trancs.dart';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:expence_tracker/models/trancs.dart';
 
 class TransactionScreen extends StatelessWidget {
   const TransactionScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Retrieve the Hive box where transactions are stored
-    final transactionBox = Hive.box('transactions');
+    final box = Hive.box('transactions');
+    final ThemeData theme = Theme.of(context);
 
     return Scaffold(
-      body: ValueListenableBuilder(
-        // Listens to changes in the transactions box and rebuilds UI accordingly
-        valueListenable: transactionBox.listenable(),
-        builder: (context, Box box, widget) {
-          // Display message when there are no transactions
-          if (box.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.money_off, // Icon indicating no transactions
-                    size: 80,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'No transactions yet.',
-                    // Optionally style this text using theme later
-                  ),
-                ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              theme.colorScheme.primary.withOpacity(0.1),
+              theme.colorScheme.background,
+            ],
+          ),
+        ),
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              floating: true,
+              snap: true,
+              title: Text(
+                'Transactions',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            );
-          } else {
-            // If transactions exist, display them in a ListView
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: box.length, // Number of transactions
-              itemBuilder: (context, index) {
-                // Retrieve the transaction at the current index
-                final transaction = box.getAt(index) as Transaction;
-                final isIncome =
-                    transaction.isIncome; // Check if it's an income
-                final formattedDate = DateFormat.yMMMd()
-                    .format(transaction.date); // Format the date
+              centerTitle: true,
+              backgroundColor: Colors.transparent,
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final transaction = box.getAt(index) as Transaction;
+                    return _TransactionItem(transaction: transaction);
+                  },
+                  childCount: box.length,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-                // Display each transaction inside a card
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  elevation: 3,
-                  child: ListTile(
-                    leading: Icon(
-                      isIncome
-                          ? Icons.arrow_upward
-                          : Icons
-                              .arrow_downward, // Icon depending on transaction type
-                      color: isIncome
-                          ? Colors.green
-                          : Colors.red, // Color for income/expense
-                    ),
-                    title: Text(
-                      transaction.category, // Transaction category name
-                      // style: theme.textTheme.subtitle1, // Optional text styling
-                    ),
-                    subtitle: Text(formattedDate), // Formatted transaction date
-                    trailing: Text(
-                      isIncome
-                          ? '+ \$${transaction.amount.toStringAsFixed(2)}' // Display income with plus sign
-                          : '- \$${transaction.amount.toStringAsFixed(2)}', // Display expense with minus sign
-                      style: TextStyle(
+class _TransactionItem extends StatelessWidget {
+  final Transaction transaction;
+
+  const _TransactionItem({required this.transaction});
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final bool isIncome = transaction.isIncome;
+    final String formattedDate = DateFormat.yMMMd().format(transaction.date);
+    final String formattedAmount = 'Rp${transaction.amount.toStringAsFixed(2)}';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            // Optional: Add transaction details view
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Leading Icon
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isIncome
+                        ? Colors.green.withOpacity(0.1)
+                        : Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    isIncome ? Icons.arrow_upward : Icons.arrow_downward,
+                    color: isIncome ? Colors.green : Colors.red,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+
+                // Transaction Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        transaction.title,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        transaction.category,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.textTheme.bodyMedium?.color
+                              ?.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Amount and Date
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      isIncome ? '+ $formattedAmount' : '- $formattedAmount',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: isIncome ? Colors.green : Colors.red,
                         fontWeight: FontWeight.bold,
-                        color: isIncome
-                            ? Colors.green
-                            : Colors.red, // Color based on transaction type
-                        fontSize: 16,
                       ),
                     ),
-                  ),
-                );
-              },
-            );
-          }
-        },
+                    const SizedBox(height: 4),
+                    Text(
+                      formattedDate,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color:
+                            theme.textTheme.bodySmall?.color?.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

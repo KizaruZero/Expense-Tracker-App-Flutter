@@ -30,7 +30,7 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text('GFG Expense Tracker'),
+        title: const Text('Kizaru Money Tracker'),
       ),
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(

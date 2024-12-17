@@ -24,7 +24,7 @@ class ExpenseTrackerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      title: 'GFG Expense Tracker',
+      title: 'Kizaru Money Tracker',
       home: ExpenseHomeScreen(),
     );
   }
